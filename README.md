@@ -1,2 +1,3 @@
-# solidity_playground
-Experimenting with Solidity
+# Solidity Playground
+
+Home for silly smart contracts written while learning Solidity and experimenting with it.
