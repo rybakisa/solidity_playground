@@ -35,16 +35,16 @@ contract SillyDepositContract {
         return depositVolume + depositVolume * interestRate / 100;
     }
 
-    function withdrawDeposit(uint _withdrawAmountInPercents) public {
-        require(block.timestamp-depositDate < lockPeriod, 'Your funds still locked');
+    function withdrawDeposit(uint _withdrawAmount) public {
+        require(block.timestamp-depositDate < lockPeriod, 'Your funds are still locked!');
         require(depositOwner == msg.sender, 'You are not owner of this deposit!');
 
         uint fullAmount = compoundInterest();
-        uint amountToSend = fullAmount * _withdrawAmountInPercents / 100;
-        depositVolume = fullAmount - amountToSend;
+        require(fullAmount >= _withdrawAmount, 'Insufficient funds!');
 
         address payable to = payable(msg.sender);
-        to.transfer(amountToSend);
+        depositVolume = fullAmount - _withdrawAmount;
+        to.transfer(_withdrawAmount);
     }
     
 }
