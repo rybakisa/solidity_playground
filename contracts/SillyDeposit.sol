@@ -22,17 +22,10 @@ contract SillyDepositContract {
     }
 
     function receiveDeposit() public payable {
-        if (depositOwner == address(0)) {
-            depositOwner = payable(msg.sender);
-            depositVolume += msg.value;
-            depositDate = block.timestamp;
-        }
-        else if (depositOwner == payable(msg.sender)) {
-            revert('You can't refund this deposit!');
-        }
-        else {
-            revert('This deposit already owned!');
-        }
+        require(depositOwner == address(0), 'You cant refund this deposit!');
+        depositOwner = payable(msg.sender);
+        depositVolume += msg.value;
+        depositDate = block.timestamp;
     }
 
     function receiveFunds() public payable {
