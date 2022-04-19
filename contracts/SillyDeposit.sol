@@ -24,11 +24,14 @@ contract SillyDepositContract {
     function receiveDeposit() public payable {
         require(depositOwner == address(0), 'You cant refund this deposit!');
         depositOwner = payable(msg.sender);
-        depositVolume += msg.value;
+        depositVolume = msg.value;
         depositDate = block.timestamp;
     }
 
     function receiveFunds() public payable {
+        if (depositOwner == address(0) || depositOwner == msg.sender) {
+            receiveDeposit();
+        }
     }
 
     function compoundInterest() private view returns(uint) {
@@ -36,8 +39,8 @@ contract SillyDepositContract {
     }
 
     function withdrawDeposit(uint _withdrawAmount) public {
-        require(block.timestamp-depositDate < lockPeriod, 'Your funds are still locked!');
-        require(depositOwner == msg.sender, 'You are not owner of this deposit!');
+        require(block.timestamp - depositDate < lockPeriod, 'Your funds are still locked!');
+        require(msg.sender == depositOwner, 'You are not owner of this deposit!');
 
         uint fullAmount = compoundInterest();
         require(fullAmount >= _withdrawAmount, 'Insufficient funds!');
@@ -45,6 +48,10 @@ contract SillyDepositContract {
         address payable to = payable(msg.sender);
         depositVolume = fullAmount - _withdrawAmount;
         to.transfer(_withdrawAmount);
+    }
+
+    receive () external payable {
+        receiveFunds();
     }
     
 }
