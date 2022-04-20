@@ -34,7 +34,7 @@ contract SillyDepositContract {
     }
 
     function receiveFunds() public payable {
-        if (depositOwner == address(0) || depositOwner == msg.sender) {
+        if (msg.sender != contractOwner) {
             receiveDeposit();
         }
     }
