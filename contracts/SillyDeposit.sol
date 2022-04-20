@@ -17,6 +17,11 @@ contract SillyDepositContract {
         interestRate = _interestRate;
     }
 
+    function destroyContract() public {
+        require(msg.sender == contractOwner, "You are not the owner!");
+        selfdestruct(payable(contractOwner));
+    }
+
     function getBalance() public view returns(uint) {
         return address(this).balance;
     }
