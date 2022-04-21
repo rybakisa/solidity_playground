@@ -43,7 +43,7 @@ contract SillyDepositContract is Ownable {
     }
 
     function withdrawDeposit(uint _withdrawAmount) public {
-        require(block.timestamp - depositDate < lockPeriod, 'Your funds are still locked!');
+        require(block.timestamp - depositDate > lockPeriod, 'Your funds are still locked!');
         require(msg.sender == depositOwner, 'You are not owner of this deposit!');
 
         uint fullAmount = compoundInterest();
