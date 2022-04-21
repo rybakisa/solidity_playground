@@ -1,3 +1,3 @@
-# Solidity Playground
+# Silly Deposit Protocol
 
-Home for silly smart contracts written while learning Solidity and experimenting with it.
+Dummy lending protocol developed while learning Solidity and experimenting with it.
