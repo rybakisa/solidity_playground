@@ -2,24 +2,23 @@
 
 pragma solidity ^0.8.13;
 
-contract SillyDepositContract {
+import "@openzeppelin/contracts/access/Ownable.sol";
 
+
+contract SillyDepositContract is Ownable {
     uint public depositVolume;
     uint public depositDate;
     uint public interestRate;
     uint public lockPeriod;
-    address public contractOwner;
     address public depositOwner;
 
     constructor(uint _lockPeriod, uint _interestRate) {
-        contractOwner = msg.sender;
         lockPeriod = _lockPeriod;
         interestRate = _interestRate;
     }
 
-    function destroyContract() public {
-        require(msg.sender == contractOwner, "You are not the owner!");
-        selfdestruct(payable(contractOwner));
+    function destroyContract() public onlyOwner {
+        selfdestruct(payable(owner()));
     }
 
     function getBalance() public view returns(uint) {
@@ -34,7 +33,7 @@ contract SillyDepositContract {
     }
 
     function receiveFunds() public payable {
-        if (msg.sender != contractOwner) {
+        if (msg.sender != owner()) {
             receiveDeposit();
         }
     }
@@ -58,5 +57,4 @@ contract SillyDepositContract {
     receive () external payable {
         receiveFunds();
     }
-    
 }
