@@ -6,11 +6,19 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 
 contract SillyDepositContract is Ownable {
-    uint public depositVolume;
-    uint public depositDate;
     uint public interestRate;
     uint public lockPeriod;
-    address public depositOwner;
+
+    struct Deposit {
+        uint volume;
+        uint date;
+    }
+
+    Deposit[] public deposits;
+
+    mapping (uint => address) public depositToOwner;
+    mapping (address => uint) ownerDepositsCount;
+
 
     constructor(uint _lockPeriod, uint _interestRate) {
         lockPeriod = _lockPeriod;
@@ -25,11 +33,15 @@ contract SillyDepositContract is Ownable {
         return address(this).balance;
     }
 
+    function _createDeposit() internal {
+        deposits.push(Deposit(msg.value, block.timestamp));
+        uint id = deposits.length - 1;
+        depositToOwner[id] = msg.sender;
+        ownerDepositsCount[msg.sender]++;
+    }
+
     function receiveDeposit() public payable {
-        require(depositOwner == address(0), 'You cant refund this deposit!');
-        depositOwner = payable(msg.sender);
-        depositVolume = msg.value;
-        depositDate = block.timestamp;
+        _createDeposit();
     }
 
     function receiveFunds() public payable {
@@ -38,19 +50,38 @@ contract SillyDepositContract is Ownable {
         }
     }
 
-    function compoundInterest() private view returns(uint) {
-        return depositVolume + depositVolume * interestRate / 100;
+    function compoundInterest(uint _depositVolume, uint _depositDate) private view returns(uint) {
+        uint periods = block.timestamp - _depositDate / lockPeriod;
+        uint result = _depositVolume;
+        for (uint i = 0; i < periods; i++) {
+            result += result * interestRate / 100;
+        }
+        return result;
     }
 
-    function withdrawDeposit(uint _withdrawAmount) public {
-        require(block.timestamp - depositDate < lockPeriod, 'Your funds are still locked!');
-        require(msg.sender == depositOwner, 'You are not owner of this deposit!');
+    function getDepositsByOwner(address _owner) external view returns(uint[] memory) {
+        uint[] memory result = new uint[](ownerDepositsCount[_owner]);
+        uint counter = 0;
+        for (uint i = 0; i < deposits.length; i++) {
+            if (depositToOwner[i] == _owner) {
+                result[counter] = i;
+                counter++;
+            }
+        }
+        return result;
+    }
 
-        uint fullAmount = compoundInterest();
+    function withdrawDeposit(uint _depositId, uint _withdrawAmount) public {
+        require(msg.sender == depositToOwner[_depositId], 'You are not owner of this deposit!');
+
+        Deposit storage deposit = deposits[_depositId]; 
+        require(block.timestamp - deposit.date > lockPeriod, 'Your funds are still locked!');
+
+        uint fullAmount = compoundInterest(deposit.volume, deposit.date);
         require(fullAmount >= _withdrawAmount, 'Insufficient funds!');
+        deposit.volume = fullAmount - _withdrawAmount;
 
         address payable to = payable(msg.sender);
-        depositVolume = fullAmount - _withdrawAmount;
         to.transfer(_withdrawAmount);
     }
 
